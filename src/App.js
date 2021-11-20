@@ -1,25 +1,50 @@
-import logo from './logo.svg';
+import React, { useEffect, useState } from 'react'
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import BooksList from './components/pages/BooksList';
+import Search from './components/pages/Search';
+import * as BooksAPI from './BooksAPI';
+import {adjustUpdatedBookShelf} from './BookUtils';
+
 import './App.css';
 
-function App() {
+function BooksApp(){
+  const [books, setBooks] = useState([]);
+
+  useEffect(() => {
+    BooksAPI.getAll()
+      .then((books) => setBooks(books));
+  }, []);
+
+  const updateUserBookShelf = (updatedBook, shelf, addIfNotExist) => {
+    updatedBook.shelf = shelf;
+    adjustUpdatedBookShelf(updatedBook, books, addIfNotExist);
+    BooksAPI.update(updatedBook.id, shelf)
+      .then(() =>
+        //array spreaded to avoid that react may not see the reference array changes
+        setBooks([...books]) 
+      );
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    <BrowserRouter>
+      <div className='app'>
+        <Routes>
+          <Route path='/' 
+            element={
+              <BooksList
+                books={books} 
+                updateUserBookShelf={updateUserBookShelf} />
+              } />
+          <Route exact path='/search' 
+            element={
+              <Search
+                userBooks={books} 
+                updateUserBookShelf={updateUserBookShelf} />
+              } />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  )
 }
 
-export default App;
+export default BooksApp;
